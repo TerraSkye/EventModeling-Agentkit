@@ -166,6 +166,17 @@ program
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
     console.log('  ✓ MCP server configured in .claude/settings.json');
 
+    const connectMcp = await prompt('\nShould the MCP also be connected globally? (y/n): ');
+    if (connectMcp.toLowerCase() === 'y' || connectMcp.toLowerCase() === 'yes') {
+      try {
+        execSync(`claude mcp add eventmodelers --transport http ${baseUrl}/mcp`, { stdio: 'inherit' });
+        console.log('  ✓ MCP connected globally via claude mcp add');
+      } catch {
+        console.error('  ⚠️  claude mcp add failed — you can run it manually:');
+        console.error(`       claude mcp add eventmodelers --transport http ${baseUrl}/mcp`);
+      }
+    }
+
     console.log('\n✅ Done!\n');
     console.log('Next steps — run both in separate terminals:\n');
     console.log('  Terminal 1 — realtime agent (picks up prompts → writes tasks.json):');
