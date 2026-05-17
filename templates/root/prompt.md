@@ -56,6 +56,12 @@ Each prompt object has:
 - `board_id`, `timeline_id`, `organization_id` — board context
 - `priority` — urgency hint
 
+**Board ID resolution:** Before invoking any skill, determine `BOARD_ID` for this prompt:
+1. If the prompt object has a non-empty `board_id` field, use that value — it always takes priority.
+2. Otherwise, fall back to the `boardId` in `.eventmodelers/config.json`.
+
+Pass the resolved `BOARD_ID` as `board=<uuid>` when invoking `/connect` so it overrides the config file value. Never use the config's `boardId` when the prompt supplies its own `board_id`.
+
 For every prompt, read the matching skill file from `.claude/skills/` and follow its instructions exactly. Pick the skill by content:
 
 | Intent | Skill to invoke |
