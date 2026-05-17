@@ -30,6 +30,7 @@ Before making any API calls, plan all N screens. For each screen, decide:
 
 - `screenTitle` — human-readable name (e.g. "Enter Credentials")
 - `elements` — a minimal list of grid elements (see language below, aim for 5–8 elements)
+- `visualDescription` — a prose description of the screen's visual layout and content (2–4 sentences) that lets someone who cannot see the image understand what is shown: what UI sections appear, what text/labels are visible, where buttons and inputs are placed, and the overall purpose of the screen
 
 Then **create one task per screen** using TaskCreate, naming each task after the screen title. This gives you a visible queue of work. Create the screens directly after each task has been planned.
 
@@ -159,7 +160,7 @@ curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/events" \
       "timestamp": <NOW_MS>,
       "chapterId": "<CHAPTER_ID>",
       "cellId":    "<actorCellId>",
-      "meta":      {"type": "SCREEN", "title": "<screenTitle>"},
+      "meta":      {"type": "SCREEN", "title": "<screenTitle>", "description": "<visualDescription>"},
       "node":      {"id": "<SCREEN_NODE_ID>", "data": {}}
     }
   ]'

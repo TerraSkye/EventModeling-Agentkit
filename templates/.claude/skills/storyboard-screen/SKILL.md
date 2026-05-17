@@ -26,6 +26,8 @@ If `nodeId` is missing, ask for it before doing anything. `BOARD_ID` and `BASE_U
 
 Design the screen yourself using the grid description language. Think carefully about the layout — what elements does this screen need? Where should they go on the 50×40 grid?
 
+Also compose a `visualDescription` — a prose description (2–4 sentences) of the screen's visual layout and content, written so that someone who cannot see the image can understand what is shown: what UI sections appear, what text/labels are visible, where buttons and inputs are placed, and the overall purpose of the screen.
+
 ## Grid description language
 
 Canvas: **50 × 40 grid units** (1000 × 800 px, 1 unit = 20 px).
@@ -82,7 +84,17 @@ curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/images/$NODE_ID/sket
 
 This replaces the existing image on the SCREEN node and fires a `node:changed` event so the board updates live.
 
-## Step 4 — Report back
+## Step 4 — Write the visual description into node meta
+
+After the sketch call succeeds, PATCH the node's meta to store the visual description so it is accessible to anyone who cannot see the rendered image:
+
+```bash
+curl -s -X PATCH "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$NODE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"meta": {"description": "<visualDescription>"}}'
+```
+
+## Step 5 — Report back
 
 Tell the user:
 - The node ID that was updated
