@@ -117,12 +117,6 @@ program
     const configPath = join(configDir, 'config.json');
     mkdirSync(configDir, { recursive: true });
 
-    const hasExisting = await prompt('\nDo you have an existing config from app.eventmodelers.de/account? (y/n): ');
-    if (hasExisting.toLowerCase() === 'y' || hasExisting.toLowerCase() === 'yes') {
-      console.log(`\n  Paste your config into:\n\n    ${configPath}\n\n  Then re-run this installer.\n`);
-      process.exit(0);
-    }
-
     let config = {};
     if (existsSync(configPath)) {
       try {
@@ -134,9 +128,15 @@ program
 
     const hasConfig = config['organizationId'] && config['token'];
     if (!hasConfig) {
+      const hasExisting = await prompt('\nDo you have an existing config from app.eventmodelers.de/account? (y/n): ');
+      if (hasExisting.toLowerCase() === 'y' || hasExisting.toLowerCase() === 'yes') {
+        console.log(`\n  Paste your config into:\n\n    ${configPath}\n\n  Then re-run this installer.\n`);
+        process.exit(0);
+      }
+
       console.log('\n🔑 Enter your Eventmodelers credentials:\n');
-      config['organizationId'] = config['organizationId'] || await prompt('  Organization ID: ');
-      config['token']          = config['token']          || await prompt('  Token:           ');
+      config['organizationId'] = await prompt('  Organization ID: ');
+      config['token']          = await prompt('  Token:           ');
       writeFileSync(configPath, JSON.stringify(config, null, 2));
       console.log('\n  ✓ Credentials saved to .eventmodelers/config.json');
     } else {

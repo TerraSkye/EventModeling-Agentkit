@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(connect)",
+      "Bash(curl *)",
+      "Bash(python3 -c \"import uuid; print\\(uuid.uuid4\\(\\)\\)\")",
+      "Bash(python3 -c ' *)",
+      "Read(//tmp/**)",
+      "Bash(python3 -m json.tool)",
+      "Bash(npm run *)"
+    ]
+  }
+}
