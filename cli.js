@@ -181,9 +181,9 @@ program
     console.log('Next steps — run both in separate terminals:\n');
     console.log('  Terminal 1 — realtime agent (picks up prompts → writes tasks.json):');
     console.log('       cd realtime-agent && npm run dev\n');
-    console.log('  Terminal 2 — ralph loop (reads tasks.json → executes via Claude):');
+    console.log('  Terminal 2 — agent loop (reads tasks.json → executes tasks):');
     console.log('       ./ralph.sh\n');
-    console.log('Both run indefinitely. The loop waits when tasks.json is empty.');
+    console.log('Both run indefinitely. The loop skips when tasks.json is empty.');
     console.log('\nSkills are ready in .claude/skills/ — use /connect to set a board ID.');
   });
 
