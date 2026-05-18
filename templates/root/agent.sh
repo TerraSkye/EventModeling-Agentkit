@@ -17,4 +17,4 @@ claude --dangerously-skip-permissions -p "$PROMPT"
 #     and uncomment the block below. Run `ollama serve` first.
 #
 # MODEL="${OLLAMA_MODEL:-qwen3.5:9b}"
-# node "$(dirname "$0")/ollama-agent.js" "$PROMPT" "$MODEL"
+# node "$(dirname "$0")/ollama-agent.js" "$MODEL"
