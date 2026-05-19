@@ -25,6 +25,9 @@ You are an autonomous agent processing tasks queued for an eventmodelers board.
 | Design or update a single wireframe screen | `/storyboard-screen` |
 | Business analysis, gap spotting, posting questions | `/wdyt` |
 | Look up any API endpoint or element type | `/learn-eventmodelers-api` |
+| Add or rename an attribute across a chain of elements | `/attributes` |
+| Add or improve example data on element fields | `/examples` |
+| Update the status of a slice (e.g. done, in-progress) | `/update-slice-status` |
 
 Read `.claude/skills/<skill-name>/SKILL.md` before executing — each skill has required inputs and step-by-step instructions.
 

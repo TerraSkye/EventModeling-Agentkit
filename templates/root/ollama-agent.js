@@ -16,7 +16,7 @@ const { token, baseUrl } = config;
 const defaultBoardId = config.boardId;
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const MODEL = process.argv[2] || process.env.OLLAMA_MODEL || 'qwen3.5:27b';
+const MODEL = process.argv[2] || process.env.OLLAMA_MODEL || 'qwen3.5:9b';
 
 function parseSse(text) {
   for (const line of text.split('\n')) {
