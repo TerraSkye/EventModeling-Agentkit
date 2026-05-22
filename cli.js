@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, relative, sep } from 'path';
 import {
   existsSync,
   mkdirSync,
@@ -85,7 +85,7 @@ program
         try {
           cpSync(src, dest, {
             recursive: true,
-            filter: (s) => !s.includes('node_modules'),
+            filter: (s) => !relative(src, s).split(sep).includes('node_modules'),
           });
           console.log(`  ✓ Installed .agent-modeling-kit/${item}`);
         } catch (err) {
