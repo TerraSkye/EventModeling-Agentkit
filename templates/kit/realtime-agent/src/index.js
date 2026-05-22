@@ -6,6 +6,37 @@ import { writeTask } from './agentCall.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+class HttpError extends Error {
+  constructor(status, body) {
+    super(`HTTP ${status}: ${body}`);
+    this.status = status;
+  }
+}
+
+async function fetchJSON(url, options) {
+  const res = await fetch(url, options);
+  if (!res.ok) throw new HttpError(res.status, await res.text());
+  return res.json();
+}
+
+async function retryOn401(label, fn, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        if (attempt < maxRetries) {
+          console.warn(`[agent] ${label} — 401 Unauthorized, retrying (${attempt}/${maxRetries})...`);
+          continue;
+        }
+        console.error(`[agent] ${label} — 401 Unauthorized after ${maxRetries} retries, shutting down`);
+        process.exit(1);
+      }
+      throw err;
+    }
+  }
+}
+
 function findRalphShDir(startDir) {
   let dir = startDir;
   while (true) {
@@ -42,29 +73,26 @@ function loadLocalConfig() {
 }
 
 async function fetchPlatformConfig(local) {
-  const res = await fetch(`${local.baseUrl}/api/config`, {
+  const remote = await fetchJSON(`${local.baseUrl}/api/config`, {
     headers: { 'x-token': local.token },
   });
-  if (!res.ok) throw new Error(`Failed to fetch platform config: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  const remote = await res.json();
   return { ...local, ...remote };
 }
 
 async function getRealtimeToken(cfg) {
-  const res = await fetch(`${cfg.baseUrl}/api/org/${cfg.organizationId}/prompts/realtime-token`, {
-    headers: { 'x-token': cfg.token },
-  });
-  if (!res.ok) throw new Error(`Failed to get realtime token: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  const { token } = await res.json();
+  const { token } = await fetchJSON(
+    `${cfg.baseUrl}/api/org/${cfg.organizationId}/prompts/realtime-token`,
+    { headers: { 'x-token': cfg.token } },
+  );
   return token;
 }
 
 async function fetchNextPrompt(cfg, jwtToken) {
   const res = await fetch(`${cfg.baseUrl}/api/org/${cfg.organizationId}/prompts/next`, {
-    headers: { 'x-token': cfg.token, 'Authorization': `Bearer ${jwtToken}` },
+    headers: { 'x-token': cfg.token, Authorization: `Bearer ${jwtToken}` },
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to fetch prompt: ${res.status} / ${res.statusText} / ${await res.text()}`);
+  if (!res.ok) throw new HttpError(res.status, await res.text());
   return res.json();
 }
 
@@ -86,11 +114,11 @@ async function start() {
   const claudeCwd = process.argv[2] ?? findRalphShDir(process.cwd()) ?? resolve(process.cwd(), '.');
 
   const local = loadLocalConfig();
-  const cfg = await fetchPlatformConfig(local);
+  const cfg = await retryOn401('fetchPlatformConfig', () => fetchPlatformConfig(local));
 
   console.log(`[agent] Starting — org=${cfg.organizationId}, base=${cfg.baseUrl}, cwd=${claudeCwd}`);
 
-  let realtimeToken = await getRealtimeToken(cfg);
+  let realtimeToken = await retryOn401('getRealtimeToken', () => getRealtimeToken(cfg));
 
   const supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
     realtime: { params: { apikey: cfg.supabaseAnonKey } },
@@ -98,42 +126,38 @@ async function start() {
 
   await supabase.realtime.setAuth(realtimeToken);
 
+  const channelName = `org:${cfg.organizationId}`;
+
   supabase
-    .channel(`org:${cfg.organizationId}`, { config: { private: true } })
+    .channel(channelName, { config: { private: true } })
+    .on('broadcast', { event: 'message' }, (msg) => {
+      if (msg.payload === 'Exit') {
+        console.log('[agent] Received "Exit" — shutting down');
+        process.exit(0);
+      }
+    })
     .on('broadcast', { event: 'prompt:created' }, async () => {
       console.log('[agent] New prompt received');
-      await drainQueue(cfg, realtimeToken, claudeCwd).catch((err) => console.error('[agent] Queue drain error:', err));
+      await drainQueue(cfg, realtimeToken, claudeCwd).catch((err) =>
+        console.error('[agent] Queue drain error:', err),
+      );
     })
     .subscribe(async (status) => {
-      await drainQueue(cfg, realtimeToken, claudeCwd).catch((err) => console.error('[agent] Queue drain error:', err));
-      console.log(`[agent] Realtime channel status: ${status}`);
+      await drainQueue(cfg, realtimeToken, claudeCwd).catch((err) =>
+        console.error('[agent] Initial drain error:', err),
+      );
+      console.log(`[agent] Realtime channel "${channelName}" status: ${status}`);
     });
 
   setInterval(async () => {
     try {
-      realtimeToken = await getRealtimeToken(cfg);
+      realtimeToken = await retryOn401('getRealtimeToken (refresh)', () => getRealtimeToken(cfg));
       supabase.realtime.setAuth(realtimeToken);
       console.log('[agent] Realtime token refreshed');
     } catch (err) {
       console.error('[agent] Token refresh failed:', err);
     }
-  }, 50 * 60 * 1000);
-
-  const ping = async () => {
-    try {
-      const res = await fetch(`${cfg.baseUrl}/api/agent-alive`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${realtimeToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: cfg.token }),
-      });
-      if (!res.ok) console.error(`[agent] Ping failed: ${res.status}`);
-    } catch (err) {
-      console.error('[agent] Ping error:', err);
-    }
-  };
-
-  await ping();
-  setInterval(ping, 10 * 1000);
+  }, 10 * 60 * 1000);
 }
 
 start().catch((err) => {

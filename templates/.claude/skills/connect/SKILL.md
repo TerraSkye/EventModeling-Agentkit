@@ -1,6 +1,6 @@
 ---
 name: connect
-description: Resolve eventmodelers connection config (token, boardId, baseUrl) from inline params or .eventmodelers/config.json — ask the user for missing values, persist them, and add the file to .gitignore. All other skills invoke this first.
+description: Resolve eventmodelers connection config (token, boardId, baseUrl) from inline params or .agent-modeling-kit/.eventmodelers/config.json — ask the user for missing values, persist them, and add the file to .gitignore. All other skills invoke this first.
 ---
 
 # Connect — Resolve Eventmodelers Config
@@ -48,17 +48,17 @@ If an inline `board=<uuid>` is found, use it as `BOARD_ID` — **it takes priori
 
 ## Step 1 — Read config file
 
-Check whether `.eventmodelers/config.json` exists in the current working directory:
+Check whether `.agent-modeling-kit/.eventmodelers/config.json` exists in the current working directory:
 
 ```bash
-cat .eventmodelers/config.json 2>/dev/null
+cat .agent-modeling-kit/.eventmodelers/config.json 2>/dev/null
 ```
 
 If the file exists and is valid JSON, extract any values **not already set by Step 0**:
 - `token` → `TOKEN`
 - `boardId` → `BOARD_ID`
 - `organizationId` → `ORG_ID`
-- `baseUrl` → `BASE_URL` (default: `https://api.eventmodelers.de` if missing)
+- `baseUrl` → `BASE_URL` (default: `https://api.agent-modeling-kit.de` if missing)
 
 Resolution priority: **inline param > config file > ask user**
 
@@ -75,7 +75,7 @@ If after Steps 0 and 1 any required field is still missing, **ask the user one q
 **If the user answers yes:**
 Stop asking questions. Show this hint and wait for them to paste:
 
-> "Great — please paste your config from https://app.eventmodelers.de/account here."
+> "Great — please paste your config from https://app.agent-modeling-kit.de/account here."
 
 When they paste a JSON object, parse it immediately — accept both `orgId` and `organizationId` as the organization field — apply all values, and proceed directly to Step 3.
 
@@ -86,7 +86,7 @@ When they paste a JSON object, parse it immediately — accept both `orgId` and 
 | `token` | "Please provide your eventmodelers API token (a UUID from your workspace settings)." |
 | `boardId` | "Please provide the board ID you want to work with (the UUID from the board URL)." |
 | `orgId` | "Please provide your organization ID (the UUID from your organization settings)." |
-| `baseUrl` | Do **not** ask — default to `https://api.eventmodelers.de` silently. |
+| `baseUrl` | Do **not** ask — default to `https://api.agent-modeling-kit.de` silently. |
 
 Where to find the token: users generate API tokens in their workspace settings at the eventmodelers platform. The token is shown only once at creation time. It is a UUID and must belong to the same organization as the board.
 
@@ -97,8 +97,8 @@ Where to find the token: users generate API tokens in their workspace settings a
 Once all values are collected, write the config file. When writing, merge with any existing config — do **not** overwrite fields that were provided as inline params with values from a previous config (the inline param is the user's explicit intent for this session, but the persisted value should reflect the most recently user-supplied value):
 
 ```bash
-mkdir -p .eventmodelers
-cat > .eventmodelers/config.json << 'EOF'
+mkdir -p .agent-modeling-kit/.eventmodelers
+cat > .agent-modeling-kit/.eventmodelers/config.json << 'EOF'
 {
   "token": "<TOKEN>",
   "boardId": "<BOARD_ID>",
@@ -108,19 +108,19 @@ cat > .eventmodelers/config.json << 'EOF'
 EOF
 ```
 
-Then ensure `.eventmodelers/config.json` is in `.gitignore`. Check whether it is already present:
+Then ensure `.agent-modeling-kit/.eventmodelers/config.json` is in `.gitignore`. Check whether it is already present:
 
 ```bash
-grep -q ".eventmodelers/config.json" .gitignore 2>/dev/null || echo "MISSING"
+grep -q ".agent-modeling-kit/.eventmodelers/config.json" .gitignore 2>/dev/null || echo "MISSING"
 ```
 
 If `MISSING`, append it:
 
 ```bash
-echo ".eventmodelers/config.json" >> .gitignore
+echo ".agent-modeling-kit/.eventmodelers/config.json" >> .gitignore
 ```
 
-Tell the user: `"Config saved to .eventmodelers/config.json and added to .gitignore."`
+Tell the user: `"Config saved to .agent-modeling-kit/.eventmodelers/config.json and added to .gitignore."`
 
 ---
 
@@ -148,7 +148,7 @@ curl -s -o /dev/null -w "%{http_code}" \
 
 ## Config file format
 
-`.eventmodelers/config.json`:
+`.agent-modeling-kit/.eventmodelers/config.json`:
 ```json
 {
   "token": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",

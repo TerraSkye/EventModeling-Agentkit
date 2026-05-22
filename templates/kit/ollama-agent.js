@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const configPath = resolve(__dirname, '.eventmodelers/config.json');
+const configPath = resolve(__dirname, '.eventmodelers', 'config.json');
 const config = JSON.parse(readFileSync(configPath, 'utf8'));
 const { token, baseUrl } = config;
 const defaultBoardId = config.boardId;

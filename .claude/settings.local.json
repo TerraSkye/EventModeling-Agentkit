@@ -10,7 +10,8 @@
       "Bash(chmod +x /Users/martindilger/development/git/sources/eventmodelers-kit/cli.js)",
       "Bash(xargs -I{} git show {}:templates/realtime-agent/src/index.js)",
       "Read(//private/tmp/sdf/**)",
-      "Read(//private/tmp/sdf/.eventmodelers/**)"
+      "Read(//private/tmp/sdf/.eventmodelers/**)",
+      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")"
     ]
   }
 }

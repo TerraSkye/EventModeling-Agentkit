@@ -1,66 +1,65 @@
-# @eventmodelers/agent-kit
+# @eventmodelers/agent-modeling-kit
 
 Real-time Claude agent + skill kit for the [Eventmodelers](https://eventmodelers.de) platform.
 
 ## Quick start
 
 ```bash
-npx @eventmodelers/agent-kit install
+npx @eventmodelers/agent-modeling-kit install
 ```
 
-The installer will prompt for:
-- **API token** — from your workspace settings
-- **Organization ID** — UUID from your workspace
-- **Base URL** — defaults to `https://api.eventmodelers.de`
-
-After installation:
-
-1. Start the real-time agent:
-   ```bash
-   cd realtime-agent && npm install && npm run dev
-   ```
-
-2. Open Claude Code in this directory — skills are available immediately.
+The installer will prompt for your API token and Organization ID from [app.eventmodelers.de/account](https://app.eventmodelers.de/account).
 
 ## What gets installed
 
-| Path | Description |
-|------|-------------|
-| `.eventmodelers/config.json` | Your token + org (gitignored) |
-| `.claude/skills/connect` | Resolves board config for all other skills |
-| `.claude/skills/timeline` | Live event storming facilitator |
-| `.claude/skills/wdyt` | Business analyst review of your event model |
-| `.claude/skills/storyboard` | Generate visual storyboards |
-| `.claude/skills/storyboard-screen` | Design individual wireframe screens |
-| `.claude/skills/place-element` | Place commands/events/read models on the board |
-| `.claude/skills/learn-eventmodelers-api` | Full API reference for agent use |
-| `realtime-agent/` | Node.js agent that listens for prompts via Supabase Realtime |
+```
+your-project/
+├── .agent-modeling-kit/          ← all agent files (created by install)
+│   ├── .eventmodelers/
+│   │   └── config.json           ← your token + org (gitignored)
+│   ├── realtime-agent/           ← Node.js agent (Supabase Realtime)
+│   ├── ralph.sh                  ← agent loop
+│   └── agent.sh                  ← claude runner
+├── .claude/
+│   └── skills/                   ← eventmodelers skills for Claude Code
+└── CLAUDE.md                     ← agent instructions
+```
+
+## Running the agent
+
+Run both in separate terminals from your project root:
+
+```bash
+# Terminal 1 — realtime agent (listens for prompts → writes tasks.json)
+cd .agent-modeling-kit/realtime-agent && npm run dev
+
+# Terminal 2 — agent loop (reads tasks.json → runs claude in project root)
+cd .agent-modeling-kit && ./ralph.sh
+```
+
+The loop skips when `tasks.json` is empty. Claude always runs in your project root so it can access your full codebase.
 
 ## Skills
 
 Use skills in Claude Code with `/skill-name`:
 
-- `/connect` — set up board connection
-- `/timeline` — guided event storming session
-- `/wdyt` — "what do you think?" business analysis
-- `/storyboard` — build a full visual storyboard
-- `/place-element` — place a specific element on the timeline
-
-## Real-time agent
-
-The real-time agent connects to your organization's Supabase Realtime channel and processes prompts sent from the Eventmodelers platform. It spawns `claude --dangerously-skip-permissions` for each prompt and acknowledges completion.
-
-```bash
-cd realtime-agent
-npm install
-npm run dev           # development (tsx)
-npm run build && npm start  # production
-```
+| Skill | Description |
+|-------|-------------|
+| `/connect` | Set up board connection |
+| `/timeline` | Live event storming facilitator |
+| `/wdyt` | Business analyst review of your event model |
+| `/storyboard` | Build a full visual storyboard |
+| `/storyboard-screen` | Design individual wireframe screens |
+| `/place-element` | Place commands/events/read models on the board |
+| `/learn-eventmodelers-api` | Full API reference for agent use |
+| `/attributes` | Add/rename attributes across a chain of elements |
+| `/examples` | Add example data to element fields |
+| `/update-slice-status` | Update slice status on the board |
 
 ## Commands
 
 ```bash
-npx @eventmodelers/agent-kit install    # install + configure
-npx @eventmodelers/agent-kit status     # check what's installed
-npx @eventmodelers/agent-kit uninstall  # remove installed files
+npx @eventmodelers/agent-modeling-kit install    # install + configure
+npx @eventmodelers/agent-modeling-kit status     # check what's installed
+npx @eventmodelers/agent-modeling-kit uninstall  # remove installed files
 ```
