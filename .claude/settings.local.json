@@ -22,7 +22,8 @@
       "Bash(npx @eventmodelers/agent-modeling-kit@0.1.37 install)",
       "Bash(rm -rf /tmp/agent-test)",
       "Bash(mkdir /tmp/agent-test)",
-      "Read(//Users/martindilger/development/git/sources/ralph-kit/**)"
+      "Read(//Users/martindilger/development/git/sources/ralph-kit/**)",
+      "Bash(git *)"
     ]
   }
 }
