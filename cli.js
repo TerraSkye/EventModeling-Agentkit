@@ -143,15 +143,14 @@ program
     if (!hasConfig) {
       const hasExisting = await prompt('\nDo you have an existing config from app.eventmodelers.de/account? (y/n): ');
       if (hasExisting.toLowerCase() === 'y' || hasExisting.toLowerCase() === 'yes') {
-        console.log(`\n  Paste your config into:\n\n    ${configPath}\n\n  Then re-run this installer.\n`);
-        process.exit(0);
+        console.log(`\n  Paste your config into:\n\n    ${configPath}\n`);
+      } else {
+        console.log('\n🔑 Enter your Eventmodelers credentials:\n');
+        config['organizationId'] = await prompt('  Organization ID: ');
+        config['token']          = await prompt('  Token:           ');
+        writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log('\n  ✓ Credentials saved to .agent-modeling-kit/.eventmodelers/config.json');
       }
-
-      console.log('\n🔑 Enter your Eventmodelers credentials:\n');
-      config['organizationId'] = await prompt('  Organization ID: ');
-      config['token']          = await prompt('  Token:           ');
-      writeFileSync(configPath, JSON.stringify(config, null, 2));
-      console.log('\n  ✓ Credentials saved to .agent-modeling-kit/.eventmodelers/config.json');
     } else {
       console.log('\n  ✓ Config already present — skipping credential prompt');
     }

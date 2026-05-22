@@ -11,7 +11,15 @@
       "Bash(xargs -I{} git show {}:templates/realtime-agent/src/index.js)",
       "Read(//private/tmp/sdf/**)",
       "Read(//private/tmp/sdf/.eventmodelers/**)",
-      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
+      "Bash(npm pack *)",
+      "Bash(mkdir -p /tmp/em-test)",
+      "Read(//tmp/**)",
+      "Bash(node /Users/martindilger/development/git/sources/eventmodelers-kit/cli.js install)",
+      "Bash(npm view *)",
+      "Bash(rm -rf /tmp/em-test2)",
+      "Bash(mkdir /tmp/em-test2)",
+      "Bash(npx @eventmodelers/agent-modeling-kit@0.1.37 install)"
     ]
   }
 }
