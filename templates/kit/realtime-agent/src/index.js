@@ -96,6 +96,8 @@ async function fetchNextPrompt(cfg, jwtToken) {
   return res.json();
 }
 
+
+
 async function drainQueue(cfg, jwtToken, claudeCwd) {
   const prompts = [];
   let prompt;

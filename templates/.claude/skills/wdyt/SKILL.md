@@ -99,39 +99,15 @@ Every question and every summary theme must be written in plain business languag
 
 For each question you want to ask, post it as a `QUESTION`-type comment on the most relevant node (the COMMAND, EVENT, SCREEN, or READMODEL the question is about). If a question is about the whole slice rather than a specific element, post it on the first/primary EVENT of the slice.
 
-**Endpoint:**
-```
-POST /api/org/{orgId}/boards/{boardId}/events
-```
+Use the `handle-comment` skill with `action=place` to post each comment. Pass:
+- `nodeId` — the UUID of the element the question is about
+- `text` — your question (one sentence, plain business language)
+- `type` — `QUESTION`
+- `author` — `wdyt`
 
-**Payload** (send as array, one comment:added event per question):
-```json
-[
-  {
-    "eventType": "comment:added",
-    "boardId": "<boardId>",
-    "nodeId": "<nodeId of the element the question is about>",
-    "timestamp": <Date.now()>,
-    "comment": {
-      "nodeId": "<nodeId>",
-      "boardId": "<boardId>",
-      "text": "<your question>",
-      "type": "QUESTION",
-      "timestamp": <Date.now()>,
-      "resolved": false,
-      "agentRequest": true,
-      "author": "wdyt"
-    }
-  }
-]
-```
+The comment API has no batch endpoint — `handle-comment` sends one request per comment. Fire them sequentially.
 
-**Important:**
-- `id` fields (outer event and `comment.id`) can be omitted — the server assigns UUIDs automatically
-- `agentRequest: true` marks these as AI-generated so the team knows where they came from
-- `author: "wdyt"` identifies the source skill
-- Batch up to **10 comments per POST request** to avoid overwhelming the endpoint
-- Only post questions that are **genuinely unclear or missing** — don't post observations that are clearly intentional design decisions
+Only post questions that are **genuinely unclear or missing** — don't post observations that are clearly intentional design decisions.
 
 ---
 
