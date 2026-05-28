@@ -317,7 +317,39 @@ For each command identified, invoke `place-element` with:
 
 Commands go in the `interaction` lane — same column as their resulting event.
 
-After all commands are placed, present the Command Catalog summary as text to the user.
+### Wire connections after placing each COMMAND
+
+After `place-element` returns the COMMAND node ID, create the arrows that complete the slice:
+
+1. **SCREEN → COMMAND** — find the SCREEN node in the actor row of the same column:
+   ```bash
+   curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?cellId=<actorRowId>-<columnId>" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-inputs"
+   ```
+   If a SCREEN node exists, connect it:
+   ```bash
+   curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/connections" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-inputs" \
+     -H "Content-Type: application/json" \
+     -d '{"source":"<screenNodeId>","target":"<commandNodeId>"}'
+   ```
+
+2. **COMMAND → EVENT** — find the EVENT node in the swimlane row of the same column:
+   ```bash
+   curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?cellId=<swimlaneRowId>-<columnId>" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-inputs"
+   ```
+   Connect command to its resulting event:
+   ```bash
+   curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/connections" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-inputs" \
+     -H "Content-Type: application/json" \
+     -d '{"source":"<commandNodeId>","target":"<eventNodeId>"}'
+   ```
+
+Skip a connection silently if the target cell is empty (the element may be placed in a later step). Log each created arrow: `→ connected SCREEN→COMMAND "PlaceOrder"` or `→ connected COMMAND→EVENT "PlaceOrder"→"OrderPlaced"`.
+
+After all commands are placed and wired, present the Command Catalog summary as text to the user.
 
 ---
 

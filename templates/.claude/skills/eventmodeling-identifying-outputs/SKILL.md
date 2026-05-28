@@ -361,7 +361,34 @@ Read models go in the `interaction` lane — **immediately adjacent to (right of
 
 **View screens go in the same column as the read model they display.** After placing a READMODEL, place the corresponding SCREEN (actor row, same column) — do not create a separate column for it.
 
-After all read models and view screens are placed, present the Read Model Catalog summary as text to the user.
+### Wire connections after placing each READMODEL (and its SCREEN)
+
+After `place-element` returns the READMODEL node ID, create the arrows that complete the slice:
+
+1. **EVENT → READMODEL** — find the primary source EVENT node in the swimlane row of the same column:
+   ```bash
+   curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?cellId=<swimlaneRowId>-<columnId>" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-outputs"
+   ```
+   Connect it:
+   ```bash
+   curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/connections" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-outputs" \
+     -H "Content-Type: application/json" \
+     -d '{"source":"<eventNodeId>","target":"<readmodelNodeId>"}'
+   ```
+
+2. **READMODEL → SCREEN** — after placing the SCREEN in the actor row of the same column, connect them:
+   ```bash
+   curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/connections" \
+     -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: eventmodeling-identifying-outputs" \
+     -H "Content-Type: application/json" \
+     -d '{"source":"<readmodelNodeId>","target":"<screenNodeId>"}'
+   ```
+
+Skip a connection silently if the target cell is empty. Log each created arrow: `→ connected EVENT→READMODEL "OrderPlaced"→"OrderStatusView"` or `→ connected READMODEL→SCREEN "OrderStatusView"→"Order Status Screen"`.
+
+After all read models, view screens, and connections are in place, present the Read Model Catalog summary as text to the user.
 
 ---
 
