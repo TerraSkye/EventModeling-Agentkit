@@ -86,6 +86,9 @@ Only run this when position was omitted (append mode):
 
 ```bash
 curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$TIMELINE_ID/columns" \
+  -H "x-token: $TOKEN" \
+  -H "x-board-id: $BOARD_ID" \
+  -H "x-user-id: agent" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -111,18 +114,38 @@ Cell IDs are always `<rowId>-<columnId>` — no cell array search needed.
 curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?cellId=$CELL_ID"
 ```
 
-If the response contains any nodes, stop and tell the user: "Cell `<CELL_ID>` at column index `<n>` already contains `<existing node titles>`. Choose a different position or confirm overwrite."
+**If the cell is occupied**, the behaviour depends on the element type being placed:
 
-If no matching row or cell is found, stop and report the error — the timeline may be missing the required lane type.
+| Element type | Occupant type in same cell | Action |
+|---|---|---|
+| `READMODEL` | `COMMAND` (state-change slice already owns this column) | Insert a **new column immediately after** the current column (not at the end) and use that new column as the target. |
+| `SCREEN` (view/output screen) | any | Same as READMODEL — insert immediately after. |
+| Any | Same element type | Stop and tell the user — true conflict, no safe default. |
+| Any | Different type but not a known pairing | Stop and tell the user. |
+
+**Insert immediately after** means: create the new column with `index = currentColumnIndex + 1`, not by appending to the end. This keeps the read model visually adjacent to the event that drives it.
+
+```bash
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$TIMELINE_ID/columns" \
+  -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: agent" \
+  -H "Content-Type: application/json" \
+  -d '{"index": <currentColumnIndex + 1>}'
+```
+
+If no matching row is found, stop and report the error — the timeline may be missing the required lane type.
 
 ---
 
 ## Step 7 — Create the node
 
+Include `x-token`, `x-board-id`, and `x-user-id: agent` on every call to `/nodes/events`:
+
 ```bash
 curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
+  -H "x-token: $TOKEN" \
+  -H "x-board-id: $BOARD_ID" \
+  -H "x-user-id: agent" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: place-element-skill" \
   -d '[{
     "eventType": "node:created",
     "nodeId": "<node-uuid>",
@@ -139,6 +162,8 @@ curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
 ```
 
 Response: `{ "hashes": { "<event-uuid>": "<hash>" } }`
+
+> **`node:created` with `cellId` IS the placement** — do NOT also call the `drop` endpoint afterwards. The `drop` endpoint adds a second cell reference without removing the first, causing the node to appear in two columns simultaneously. Use `node:created + cellId` for all initial placements.
 
 ---
 

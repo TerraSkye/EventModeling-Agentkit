@@ -17,6 +17,27 @@ what to carry forward between steps.
 
 ---
 
+## Timeline Alignment Rules
+
+These rules govern how every element is placed on the board. Enforce them throughout the workflow.
+
+### State-change slice (SCREEN → COMMAND → EVENT)
+- COMMAND and EVENT go in **the same column** — the command produces the event.
+- SCREEN (input/command screen) goes in the **actor row of that same column**.
+
+### State-view slice (EVENT → READ MODEL → SCREEN)
+- READ MODEL goes in the **interaction row** of a column that is **immediately after the primary source event's column** — never at the end of the timeline.
+- SCREEN (view/output screen) goes in the **actor row of the same column as the READ MODEL**.
+- If the primary source event's column already has a COMMAND in the interaction row, insert a **new column immediately after** (using `index = currentColumnIndex + 1`) and place the READ MODEL there.
+
+### Never stack read models at the end
+Placing all read models in new columns at the very end of the timeline severs the visual connection to the events they're derived from. The board must show a coherent left-to-right narrative where each slice is self-contained.
+
+### Column insertion
+Use `POST /timelines/:tl/columns` with `{"index": N}` to insert a column at a specific position (shifts existing columns right). Do not use `{}` (append) when placing read models or view screens — always target the correct position.
+
+---
+
 ## Interview Phase
 
 **Skip if**: user has provided a clear domain description, requirements or
@@ -103,7 +124,11 @@ human role, showing what data each screen displays and collects.
 
 Use the Story-Board-Screen skill to sketch and provide Mockups. 
 
+You can reuse columns if screens can be matched to existing events, place the screen in the same
+column as the event in the actor lane
+
 ---
+
 
 ### Step 4: Identify Inputs
 
@@ -146,8 +171,10 @@ Invoke `eventmodeling-elaborating-scenarios`.
 
 **Input**: Commands and read models.
 **Output to carry forward**: Given-When-Then specifications for each command
-and view, including happy paths, validation failures, and edge cases.
+and view, including happy paths, validation failures, and edge cases, posted to the board spec cells.
 **Gate**: At least one scenario per command before proceeding.
+
+> The `eventmodeling-elaborating-scenarios` skill designs scenarios **and** posts them to the board. It uses `GET /timelines/$TL/spec-info` to resolve node IDs, then `POST /timelines/$TL/columns/$COL/scenarios` for each scenario. Ensure the timeline and column IDs are resolved and passed to the skill before invoking it.
 
 ---
 

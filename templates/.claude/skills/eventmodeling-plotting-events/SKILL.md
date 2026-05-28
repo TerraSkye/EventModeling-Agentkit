@@ -108,6 +108,8 @@ For each event in the final chronological order, invoke `place-element` with:
 | `boardId` | `BOARD_ID` |
 | `timelineId` | the chapter to use — find an existing one or let `place-element` prompt |
 
+Reuse existing empty columns, do not blindly create new ones.
+
 Process events in order, one at a time. Do not skip any event.
 
 After all events are placed, summarise to the user:

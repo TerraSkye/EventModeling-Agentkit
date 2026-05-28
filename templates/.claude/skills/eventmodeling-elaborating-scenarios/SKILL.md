@@ -528,6 +528,80 @@ And inventory reservation is released
 ```
 ````
 
+## Post Scenarios to Board
+
+After designing all scenarios, post them to the board using the timeline/column API. Do this for every command and view that has scenarios.
+
+### Step 1 — Identify the target timeline and column
+
+Fetch all CHAPTER nodes to find the timeline:
+
+```bash
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?type=CHAPTER" \
+  -H "x-token: $TOKEN"
+```
+
+If there is more than one chapter, ask the user which timeline to target.
+
+For each command or view being specified, find its column: fetch the chapter node and read `meta.timelineData.columns`. Match the column to the COMMAND or READMODEL node that occupies the interaction row in that column. If the user named the slice, find the SLICE_BORDER node with that title to get its `colId`.
+
+### Step 2 — Load valid step elements
+
+For each target timeline, call spec-info to discover the node IDs that may appear in given/when/then:
+
+```bash
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$TL/spec-info" \
+  -H "x-token: $TOKEN"
+# → { timelineId, elements: [{ id, title, type }] }
+```
+
+Build a lookup map: `title (lowercase) → { id, type }`. Use this to resolve scenario step names to node IDs.
+
+### Step 3 — Resolve step IDs
+
+For each scenario step (given/when/then items), match the step title against the spec-info lookup. If a title matches unambiguously, use that node's `id`. If a title is ambiguous or unmatched, log it and skip that step item rather than failing — the scenario can still be posted with fewer steps.
+
+Each step item sent to the API must be:
+```json
+{ "id": "<nodeId>", "title": "<title>", "type": "<EVENT|COMMAND|READMODEL>" }
+```
+
+### Step 4 — Post each scenario
+
+For each scenario, POST to the column's spec cell:
+
+```bash
+curl -s -X POST \
+  "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$TL/columns/$COL/scenarios" \
+  -H "x-token: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "<uuid>",
+    "title": "<scenario title>",
+    "given": [{"id":"<eventId>","title":"<title>","type":"EVENT"}],
+    "when":  [{"id":"<commandId>","title":"<title>","type":"COMMAND"}],
+    "then":  [{"id":"<eventId2>","title":"<title>","type":"EVENT"}]
+  }'
+# → 201 { specNodeId, scenarios, isNewNode }
+```
+
+Post scenarios one at a time (the API has no batch endpoint). On `409` (duplicate title), skip and continue. On `400`, log the error and the scenario title, then continue with the next.
+
+**Rules enforced by the server (do not pre-validate — let the server reject):**
+- `given`: EVENTs only
+- `when`: at most one COMMAND; empty when `then` contains a READMODEL
+- `then`: EVENTs only OR exactly one READMODEL — never mixed
+- All step node IDs must belong to the same timeline
+
+### Step 5 — Report back
+
+After posting, tell the user:
+- How many scenarios were posted successfully (per command/view)
+- Any scenarios skipped due to duplicate title or unresolvable step IDs
+- The `specNodeId` of each spec node created or updated
+
+---
+
 ## Quality Checklist
 
 - [ ] Every command has success scenario

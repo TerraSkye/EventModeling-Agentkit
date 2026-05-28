@@ -146,10 +146,15 @@ Extract `columnId` from the response. Compute the actor cell ID directly:
 
 **In both cases**, generate a node UUID: `SCREEN_NODE_ID`. Generate an event UUID: `ACTOR_EVT_ID`.
 
-Place the SCREEN node into the actor cell — this endpoint routes `node:created` events through `sendNodeEvents`, which creates the node in the DB and stamps the cellId into the chapter grid:
+iPlace the SCREEN node into the actor cell using the `/nodes/events` endpoint (agent-compatible — requires `x-user-id: agent`):
+
+> **Do NOT use** `/boards/$BOARD_ID/events` — that endpoint requires a user JWT and will fail for agent (x-token) auth with "Authenticated user id is required".
 
 ```bash
-curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
+  -H "x-token: $TOKEN" \
+  -H "x-board-id: $BOARD_ID" \
+  -H "x-user-id: agent" \
   -H "Content-Type: application/json" \
   -d '[
     {
@@ -166,7 +171,9 @@ curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/events" \
   ]'
 ```
 
-Verify the response is HTTP 200. If it fails, stop and report the error — do not proceed to the sketch step.
+Verify the response contains `"hashes"`. If it fails, stop and report the error — do not proceed to the sketch step.
+
+> **Do NOT call the `drop` endpoint after this step.** `node:created` with `cellId` already places the node in the correct cell. Calling drop afterwards creates a duplicate cell reference without removing the original, causing the node to appear in two columns simultaneously.
 
 ### Step 5b — Render the sketch onto the SCREEN node
 
@@ -174,6 +181,9 @@ Include `semanticDescription` (a short human-readable description of what this s
 
 ```bash
 curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/images/$SCREEN_NODE_ID/sketch" \
+  -H "x-token: $TOKEN" \
+  -H "x-board-id: $BOARD_ID" \
+  -H "x-user-id: agent" \
   -H "Content-Type: application/json" \
   -d '{"semanticDescription": "<screenTitle — what this screen shows>", "elements": [...]}'
 ```

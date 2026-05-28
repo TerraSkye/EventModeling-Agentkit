@@ -308,6 +308,19 @@ After completing the screen analysis, use the `handle-comment` skill to post a Q
 
 To create the visual wireframe sketches, invoke the `storyboard` skill (for a full flow) or `storyboard-screen` (for a single existing SCREEN node).
 
+## Timeline Placement Rules
+
+When placing screens on the board, follow these alignment rules:
+
+| Screen type | Where it goes on the board |
+|-------------|---------------------------|
+| **Input/command screen** (triggers a command) | **Actor row, same column as the COMMAND and EVENT** it produces. The storyboard and the command/event form a single state-change slice. |
+| **View/output screen** (displays a read model) | **Actor row, same column as the READ MODEL** it displays. This column is placed in Step 5 (Identifying Outputs), not here. During storyboarding, just document which read model each view screen will query — do not create a separate column for it yet. |
+
+> **Do not create standalone screen columns that are disconnected from commands or read models.** Every screen must share its column with either the command it submits or the read model it displays.
+
+---
+
 ## Output Format
 
 Present as:

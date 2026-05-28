@@ -412,5 +412,6 @@ Include error and boundary conditions:
 - [ ] Each event can be traced back to a specific actor in the Role Catalog
 - [ ] No CRUD events (`UserUpdated`, `RecordDeleted`) — events describe business moments, not database operations
 - [ ] All known error and boundary conditions have corresponding events
+- [ ] No empty columns left in the timeline
 - [ ] Events group into at least one recognizable business process flow
 - [ ] No overlapping event semantics — two events don't mean the same thing

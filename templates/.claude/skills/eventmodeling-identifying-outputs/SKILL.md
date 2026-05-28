@@ -355,9 +355,13 @@ For each read model identified, invoke `place-element` with:
 | `timelineId` | the existing chapter/timeline |
 | `position` | column index of the primary source EVENT |
 
-Read models go in the `interaction` lane — aligned with their primary source event.
+Read models go in the `interaction` lane — **immediately adjacent to (right of) the primary source event**, not at the end of the timeline.
 
-After all read models are placed, present the Read Model Catalog summary as text to the user.
+> **Timeline alignment rule**: A read model must live in a column that is positioned directly after the event column it primarily derives from. If that event's column already has a COMMAND in the interaction row (state-change slice), `place-element` will automatically insert a new column at `index + 1`. Do not append read model columns to the end — doing so severs the visual connection between events and their projections.
+
+**View screens go in the same column as the read model they display.** After placing a READMODEL, place the corresponding SCREEN (actor row, same column) — do not create a separate column for it.
+
+After all read models and view screens are placed, present the Read Model Catalog summary as text to the user.
 
 ---
 
