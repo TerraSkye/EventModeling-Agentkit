@@ -24,6 +24,7 @@ You are an autonomous agent processing tasks queued for an eventmodelers board.
 | Generate a full storyboard with multiple screens | `/storyboard` |
 | Design or update a single wireframe screen | `/storyboard-screen` |
 | Business analysis, gap spotting, posting questions | `/wdyt` |
+| Analyse the existing model structure, slice coverage, element counts | `/analyze-existing-model` |
 | Look up any API endpoint or element type | `/learn-eventmodelers-api` |
 | Add or rename an attribute across a chain of elements | `/attributes` |
 | Add or improve example data on element fields | `/examples` |

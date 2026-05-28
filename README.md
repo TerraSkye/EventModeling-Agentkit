@@ -63,3 +63,9 @@ npx @eventmodelers/agent-modeling-kit install    # install + configure
 npx @eventmodelers/agent-modeling-kit status     # check what's installed
 npx @eventmodelers/agent-modeling-kit uninstall  # remove installed files
 ```
+
+## Contributors
+
+| Contributor | Contribution |
+|-------------|-------------|
+| [Yordis Pietro](https://github.com/TrogonStack/trogonai) | All `eventmodeling-*` skills |

@@ -101,7 +101,7 @@ Invoke `eventmodeling-storyboarding-events`.
 human role, showing what data each screen displays and collects.
 **Gate**: Every human role from the Role Catalog has at least one screen.
 
-Use the Story-Board-Screen skill to sketch and provide Mockups.
+Use the Story-Board-Screen skill to sketch and provide Mockups. 
 
 ---
 
