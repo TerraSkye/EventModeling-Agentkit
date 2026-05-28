@@ -1,13 +1,13 @@
 ---
 name: place-element
-description: Place a COMMAND, READMODEL, or EVENT onto an existing eventmodelers board timeline at a specific position
+description: Place a COMMAND, READMODEL, EVENT, SCREEN, or AUTOMATION onto an existing eventmodelers board timeline at a specific position
 ---
 
 # Place Element
 
 > **Before doing anything else**, invoke the `connect` skill to resolve `TOKEN`, `BOARD_ID`, and `BASE_URL`. Then invoke the `learn-eventmodelers-api` skill to load the full API reference. Do not proceed until both skills have been loaded.
 
-Place a single element — COMMAND, READMODEL, or EVENT — onto an existing timeline on an eventmodelers board. Uses an existing column when a position is given; only creates a new column when appending.
+Place a single element — COMMAND, READMODEL, EVENT, SCREEN, or AUTOMATION — onto an existing timeline on an eventmodelers board. Uses an existing column when a position is given; only creates a new column when appending.
 
 ---
 
@@ -17,14 +17,14 @@ From `$ARGUMENTS`, extract:
 
 | Field | How to find it | Default |
 |-------|---------------|---------|
-| `elementType` | `event`, `command`, or `readmodel` (case-insensitive) | **required** |
+| `elementType` | `event`, `command`, `readmodel`, `screen`, or `automation` (case-insensitive) | **required** |
 | `title` | the element name, e.g. "Order Placed" | **required** |
 | `boardId` | a board UUID | from `connect` skill (`BOARD_ID`) |
 | `timelineId` | the chapter/timeline UUID | auto-detect (see Step 2) |
 | `position` | column index (0-based number), `"after <title>"`, or omitted | append at end |
 | `baseUrl` | explicit URL override | from `connect` skill (`BASE_URL`) |
 
-Normalise `elementType` to uppercase: `event` → `EVENT`, `command` → `COMMAND`, `readmodel` → `READMODEL`.
+Normalise `elementType` to uppercase: `event` → `EVENT`, `command` → `COMMAND`, `readmodel` → `READMODEL`, `screen` → `SCREEN`, `automation` → `AUTOMATION`.
 
 Use `BOARD_ID` and `BASE_URL` from the `connect` skill. If a `boardId` argument is explicitly passed, it overrides `BOARD_ID`.
 
@@ -73,6 +73,8 @@ If `position` is a number and no column exists at that index, stop and tell the 
 | `EVENT`       | `swimlane`         |
 | `COMMAND`     | `interaction`      |
 | `READMODEL`   | `interaction`      |
+| `SCREEN`      | `actor`            |
+| `AUTOMATION`  | `actor`            |
 
 ---
 
@@ -94,14 +96,14 @@ Save `columnId` from the response.
 
 ---
 
-## Step 6 — Find the target cell and check availability
+## Step 6 — Compute the target cell ID and check availability
 
 Using the `timelineData` already fetched in Step 3 (re-fetch if a column was just created):
 
-- Find the row in `rows` whose `type` matches the target lane (`swimlane` or `interaction`).
-- Find the cell in `cells` where `colId === columnId` AND `rowId === targetRow.id`.
+- Find the row in `rows` whose `type` matches the target lane (`swimlane`, `interaction`, or `actor`).
+- Compute the cell ID directly: **`CELL_ID = targetRow.id + "-" + columnId`**
 
-Save that cell's `id` as `CELL_ID`.
+Cell IDs are always `<rowId>-<columnId>` — no cell array search needed.
 
 **Check if the cell is already occupied**: query nodes in that cell:
 
@@ -170,7 +172,7 @@ curl -s -X POST "http://localhost:3000/api/org/<ORG_ID>/boards/<BOARD_ID>/timeli
   -H "Content-Type: application/json" \
   -d '{}'
 
-# 2. Fetch chapter to find the swimlane cell for the new column
+# 2. Fetch chapter to find the target lane cell for the new column
 curl -s -H "x-user-id: place-element-skill" \
   "http://localhost:3000/api/org/<ORG_ID>/boards/<BOARD_ID>/nodes/<TIMELINE_ID>"
 

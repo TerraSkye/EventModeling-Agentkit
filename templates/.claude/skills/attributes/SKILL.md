@@ -46,7 +46,8 @@ curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID" \
 Decode the cell name:
 - Column letter(s) → 0-based index (A=0, B=1, … Z=25, AA=26, …)
 - Row number → 0-based index (1→0, 2→1, …)
-- Find `colId` and `rowId`, then the matching cell.
+s- Find the matching column in `columns` and row in `rows`.
+- Compute: **`CELL_ID = row.id + "-" + column.id`** (cell IDs are always `<rowId>-<columnId>`).
 
 3. Always fetch the cell live:
 ```bash

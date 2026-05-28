@@ -67,7 +67,8 @@ curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID" \
 From `meta.timelineData`, decode the cell name into a `cellId`:
 - Column letter(s) → 0-based column index (A=0, B=1, … Z=25, AA=26, …)
 - Row digit → 0-based row index (1→0, 2→1, …)
-- Find the matching column and row in `columns` / `rows`, then find the cell in `cells` where `colId` and `rowId` match.
+- Find the matching column in `columns` and the matching row in `rows`.
+- Compute: **`CELL_ID = row.id + "-" + column.id`** (cell IDs are always `<rowId>-<columnId>`).
 
 3. **Always fetch the cell live** to get the current node list — do not rely on the `nodeId` in the chapter's cell data, as it may be stale:
 

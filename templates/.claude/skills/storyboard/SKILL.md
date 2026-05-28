@@ -108,11 +108,13 @@ curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 Parse `meta.timelineData` from the response:
 - `rows` — list of row objects, each with `id` and `type`
 - `columns` — list of column objects, each with `id`
-- `cells` — list of cell objects, each with `id`, `rowId`, `colId`, and optionally `nodeId`
+- `cells` — list of cell objects, each with `rowId`, `colId`, and optionally `nodeId` (used only to check occupancy)
 
-Find the row IDs for the `actor`, `interaction`, and `swimlane` row types.
+Find the row IDs for the `actor`, `interaction`, and `swimlane` row types. Save as `actorRowId`, `interactionRowId`, `swimlaneRowId`.
 
-Build an **empty-column queue**: for each column (in order), check whether ALL three cells for the actor, interaction, and swimlane rows have no `nodeId` (absent or null). For each such column, push `{actorCellId, interactionCellId, swimlaneCellId}` onto the queue.
+> **Cell ID convention**: Cell IDs are always `<rowId>-<columnId>`. Compute them directly — never search the `cells` array for an ID.
+
+Build an **empty-column queue**: for each column (in order), compute `actorCellId = actorRowId + "-" + col.id`, `interactionCellId = interactionRowId + "-" + col.id`, `swimlaneCellId = swimlaneRowId + "-" + col.id`. Check these IDs in the `cells` array for a `nodeId` (absent or null). If ALL three have no `nodeId`, push `{actorCellId, interactionCellId, swimlaneCellId}` onto the queue.
 
 ---
 
@@ -136,13 +138,11 @@ curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$CHAPTER_I
   -d '{}'
 ```
 
-Extract `columnId` from the response. Then re-fetch the chapter to find the new actor cell:
+Extract `columnId` from the response. Compute the actor cell ID directly:
 
-```bash
-curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
-```
+**`actorCellId = actorRowId + "-" + columnId`**
 
-In `meta.timelineData.cells`, find the cell where `colId == columnId` AND `rowId == <actorRowId>` (the actor row ID you recorded in Step 4). That cell's `id` is your `actorCellId`.
+(Cell IDs are always `<rowId>-<columnId>` — no re-fetch or cell array search needed.)
 
 **In both cases**, generate a node UUID: `SCREEN_NODE_ID`. Generate an event UUID: `ACTOR_EVT_ID`.
 

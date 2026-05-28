@@ -48,6 +48,7 @@ curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
 From `meta.timelineData`:
+- `rows` — find the row with `type === "swimlane"` and save its `id` as `swimlaneRowId`
 - `columns` — ordered list of columns, each with an `id`
 - `cells` — each cell has `colId`, `rowId`, and optionally `nodeId`
 
@@ -138,7 +139,11 @@ Before placing any new events, fetch the chapter node to get the current grid st
 curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
-From `meta.timelineData`, identify **empty columns**: columns where no cell has a `nodeId` set. Build a pool:
+From `meta.timelineData`:
+- Read `rows` to find and save `swimlaneRowId` (the row whose `type === "swimlane"`).
+- Identify **empty columns**: columns where no cell has a `nodeId` set.
+
+Build a pool:
 
 ```
 emptyColumns = [columnId, ...]   // in column order, ready to reuse
@@ -174,7 +179,7 @@ Stop asking questions when the user signals the process is complete or well-unde
 
 ## Step 4 — API operations
 
-> **Hard constraint**: This skill places **EVENT nodes only**, always in the `swimlane` lane. Never place COMMAND, READMODEL, or SCREEN elements. The `elementType` is always `EVENT` — no exceptions.
+> **Hard constraint**: This skill places **EVENT nodes only**, always in the `swimlane` lane. Never place COMMAND, READMODEL, SCREEN, or AUTOMATION elements here. For SCREEN/AUTOMATION actors use `place-element` (they go into the `actor` lane). The `elementType` is always `EVENT` — no exceptions.
 
 ### 4a — Add or insert an event
 
@@ -187,7 +192,9 @@ To insert between existing events: use the target index (existing events shift r
 
 Take one from the pool: `columnId = emptyColumns.shift()`.
 
-From the already-fetched `timelineData`, find the swimlane row and then find the cell where `colId === columnId` and the row's `type === "swimlane"`. Save that cell's `id` as `CELL_ID`.
+Compute the cell ID directly: **`CELL_ID = swimlaneRowId + "-" + columnId`**
+
+(Cell IDs are always `<rowId>-<columnId>` — no cell array search needed.)
 
 Then create the EVENT node directly (place-element Steps 6–7):
 

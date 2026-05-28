@@ -54,6 +54,8 @@ curl -X DELETE $BASE/api/org/$ORG/boards/$BOARD/nodes/$NODE/comments/$CID \
 
 ## Chapters & Timelines
 
+> **Cell ID convention**: Cell IDs are always implicit — computed as `<rowId>-<columnId>` (the row UUID, a hyphen, then the column UUID). Never search `timelineData.cells` to find a cell ID; just concatenate: `cellId = rowId + "-" + columnId`. The `cells` array in `timelineData` is still useful for checking whether a cell is occupied (`nodeId` present), but never for deriving the cell's own ID.
+
 ```bash
 curl -X POST $BASE/api/org/$ORG/boards/$BOARD/chapters \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{}'
@@ -69,6 +71,7 @@ curl -X POST $BASE/api/org/$ORG/boards/$BOARD/timelines/$TL/lanes \
   -d '{"type":"swimlane","label":"Domain Events"}'
 # type: actor | interaction | swimlane | spec | feedback
 
+# $CELL = <rowId>-<columnId>  (computed, not looked up)
 curl -X POST $BASE/api/org/$ORG/boards/$BOARD/timelines/$TL/cells/$CELL/drop \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"nodeId":"<uuid>","nodeType":"EVENT"}'
