@@ -1,13 +1,13 @@
 ---
 name: place-element
-description: Place a COMMAND, READMODEL, EVENT, SCREEN, or AUTOMATION onto an existing eventmodelers board timeline at a specific position
+description: Place a COMMAND, READMODEL, EVENT, SCREEN, AUTOMATION, or SCENARIO spec node onto an existing eventmodelers board timeline at a specific position
 ---
 
 # Place Element
 
 > **Before doing anything else**, invoke the `connect` skill to resolve `TOKEN`, `BOARD_ID`, and `BASE_URL`. Then invoke the `learn-eventmodelers-api` skill to load the full API reference. Do not proceed until both skills have been loaded.
 
-Place a single element — COMMAND, READMODEL, EVENT, SCREEN, or AUTOMATION — onto an existing timeline on an eventmodelers board. Uses an existing column when a position is given; only creates a new column when appending.
+Place a single element — COMMAND, READMODEL, EVENT, SCREEN, AUTOMATION, or SCENARIO spec node — onto an existing timeline on an eventmodelers board. Uses an existing column when a position is given; only creates a new column when appending.
 
 ---
 
@@ -75,6 +75,136 @@ If `position` is a number and no column exists at that index, stop and tell the 
 | `READMODEL`   | `interaction`      |
 | `SCREEN`      | `actor`            |
 | `AUTOMATION`  | `actor`            |
+| `SCENARIO`    | `spec` (see Step 4a) |
+
+### Step 4a — Placing a SCENARIO spec node
+
+A SCENARIO spec node is the container that holds GWT (Given/When/Then) scenarios in a spec lane row. It must be created with a specific structure:
+
+- The timeline must have a `spec`-type row. Fetch the chapter to find the row with `type === "spec"`.
+- The `cellId` is `specRowId + "-" + columnId` (same convention as other element types).
+- The node requires **`node.type: "spec_node"`** — this is mandatory and different from all other element types. Without it the node will not render correctly in the board UI.
+- `meta.type` must be `"SCENARIO"` (uppercase).
+- `meta.title` should be `"Specifications"`.
+
+**Node creation payload for a SCENARIO spec node:**
+
+```bash
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
+  -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: agent" \
+  -H "Content-Type: application/json" \
+  -d '[{
+    "id": "<event-uuid>",
+    "eventType": "node:created",
+    "nodeId": "<node-uuid>",
+    "boardId": "<BOARD_ID>",
+    "timestamp": <Date.now()>,
+    "chapterId": "<TIMELINE_ID>",
+    "cellId": "<specRowId>-<columnId>",
+    "meta": { "type": "SCENARIO", "title": "Specifications" },
+    "node": {
+      "id": "<node-uuid>",
+      "data": {},
+      "type": "spec_node",
+      "position": { "x": <column_x>, "y": <spec_row_y> }
+    }
+  }]'
+```
+
+**Important:** The `/timelines/$TL/columns/$COL/scenarios` endpoint (which adds GWT scenarios to a spec node) requires the spec cell to already contain a SCENARIO spec node. It **cannot auto-create** the node — attempting that returns a 500. Always pre-create the spec node first, then call `/scenarios` to append GWT entries to it.
+
+---
+
+### Step 4b — Writing GWT scenarios to a spec node
+
+Once the spec node exists, write all scenarios at once using `node:changed` on `meta.givenWhenThenScenario`:
+
+```bash
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
+  -H "x-token: $TOKEN" -H "x-board-id: $BOARD_ID" -H "x-user-id: agent" \
+  -H "Content-Type: application/json" \
+  -d '[{
+    "id": "<event-uuid>",
+    "eventType": "node:changed",
+    "nodeId": "<spec-node-uuid>",
+    "boardId": "<BOARD_ID>",
+    "timestamp": <Date.now()>,
+    "changedAttributes": ["meta.givenWhenThenScenario"],
+    "meta": {
+      "givenWhenThenScenario": {
+        "scenarios": [ ...scenario objects... ]
+      }
+    }
+  }]'
+```
+
+**Note:** The `/scenarios` POST endpoint always targets the **first** spec row in a column. When a chapter has multiple spec rows, use `node:changed` directly on the target spec node instead.
+
+#### Scenario object format
+
+**Happy path / normal scenario:**
+```json
+{
+  "id": "<scenario-uuid>",
+  "title": "...",
+  "vertical": false,
+  "given": [ ...items... ],
+  "when":  [ ...items... ],
+  "then":  [ ...items... ],
+  "comments": []
+}
+```
+
+**Error case** (when the outcome is a business rule violation):
+```json
+{
+  "id": "<scenario-uuid>",
+  "title": "...",
+  "vertical": false,
+  "given": [ ...items... ],
+  "when":  [ ...items... ],
+  "then":  [],
+  "expectError": true,
+  "errorDescription": "<human-readable error message>",
+  "examples": [],
+  "expectEmptyList": false,
+  "comments": []
+}
+```
+
+#### Step item format
+
+Each item in `given`, `when`, `then` must reference the **board node UUID** (not a config or external ID):
+
+```json
+{
+  "id":     "<board-node-uuid>",
+  "title":  "Language Added",
+  "type":   "EVENT",
+  "fields": [ { "name": "locale", "type": "String", "example": "nl_NL", ... } ],
+  "specRow": 0
+}
+```
+
+| Step | `type` value |
+|------|-------------|
+| given | `EVENT` |
+| when  | `COMMAND` |
+| then (happy) | `EVENT` or `READMODEL` |
+| then (error) | use `expectError: true` format above — leave `then: []` |
+| then (SPEC_ERROR item) | `SPEC_ERROR` with `title`, `description`, `fields: []` |
+
+#### Mapping from a slice config to board format
+
+If you have a slice definition (e.g. from a `.config` file) where items use config-internal IDs, build a lookup first:
+
+```
+config_command_id → board COMMAND node ID  (from chapter cells for that column)
+config_event_id   → board EVENT node ID    (from chapter cells for that column)
+config_rm_id      → board READMODEL node ID
+```
+
+Type name mapping from config → board: `WHEN`→`COMMAND`, `GIVEN`→`EVENT`, `THEN`→`EVENT`.
 
 ---
 
